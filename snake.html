@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake Game</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            border: 1px solid #333;
+            margin-bottom: 20px;
+        }
+        #score {
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .button-container {
+            display: flex;
+            justify-content: center;
+        }
+       .button {
+            width: 70px;
+            height: 70px;
+            margin: 5px;
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 20px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="400" height="400"></canvas>
+    <div id="score">Score: 0</div>
+    <div class="button-container">
+        <button class="button" id="upButton">Up</button>
+    </div>
+    <div class="button-container">
+        <button class="button" id="leftButton">Left</button>
+        <button class="button" id="rightButton">Right</button>
+    </div>
+    <div class="button-container">
+        <button class="button" id="downButton">Down</button>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const canvas = document.getElementById('gameCanvas');
+            const ctx = canvas.getContext('2d');
+            const scale = 20;
+            const rows = canvas.height / scale;
+            const columns = canvas.width / scale;
+            let snake;
+            let fruit;
+            let score = 0;
+            const scoreElement = document.getElementById('score');
+            const upButton = document.getElementById('upButton');
+            const leftButton = document.getElementById('leftButton');
+            const rightButton = document.getElementById('rightButton');
+            const downButton = document.getElementById('downButton');
+
+            function setup() {
+                snake = new Snake();
+                fruit = new Fruit();
+                fruit.pickLocation();
+
+                window.setInterval(() => {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    fruit.draw();
+                    snake.update();
+                    snake.draw();
+
+                    if (snake.eat(fruit)) {
+                        fruit.pickLocation();
+                        score++;
+                        scoreElement.textContent = `Score: ${score}`;
+                    }
+
+                    snake.checkCollision();
+
+                    if (score === 10) {
+                        window.location.href = 'https://rare-gallery.com/xfsearch/alt/Snake/';
+                    }
+                }, 100);
+            }
+
+            class Snake {
+                constructor() {
+                    this.x = 0;
+                    this.y = 0;
+                    this.xSpeed = scale * 1;
+                    this.ySpeed = 0;
+                    this.total = 0;
+                    this.tail = [];
+                }
+
+                draw() {
+                    ctx.fillStyle = "#2ecc71";
+                    for (let i = 0; i < this.tail.length; i++) {
+                        ctx.fillRect(this.tail[i].x, this.tail[i].y, scale, scale);
+                    }
+
+                    ctx.fillRect(this.x, this.y, scale, scale);
+                }
+
+                update() {
+                    for (let i = 0; i < this.tail.length - 1; i++) {
+                        this.tail[i] = this.tail[i + 1];
+                    }
+
+                    this.tail[this.total - 1] = { x: this.x, y: this.y };
+
+                    this.x += this.xSpeed;
+                    this.y += this.ySpeed;
+
+                    if (this.x >= canvas.width) {
+                        this.x = 0;
+                    }
+
+                    if (this.y >= canvas.height) {
+                        this.y = 0;
+                    }
+
+                    if (this.x < 0) {
+                        this.x = canvas.width - scale;
+                    }
+
+                    if (this.y < 0) {
+                        this.y = canvas.height - scale;
+                    }
+                }
+
+                changeDirection(direction) {
+                    switch (direction) {
+                        case 'Up':
+                            if (this.ySpeed !== scale * 1) {
+                                this.xSpeed = 0;
+                                this.ySpeed = -scale * 1;
+                            }
+                            break;
+                        case 'Down':
+                            if (this.ySpeed !== -scale * 1) {
+                                this.xSpeed = 0;
+                                this.ySpeed = scale * 1;
+                            }
+                            break;
+                        case 'Left':
+                            if (this.xSpeed !== scale * 1) {
+                                this.xSpeed = -scale * 1;
+                                this.ySpeed = 0;
+                            }
+                            break;
+                        case 'Right':
+                            if (this.xSpeed !== -scale * 1) {
+                                this.xSpeed = scale * 1;
+                                this.ySpeed = 0;
+                            }
+                            break;
+                    }
+                }
+
+                eat(fruit) {
+                    if (this.x === fruit.x && this.y === fruit.y) {
+                        this.total++;
+                        return true;
+                    }
+                    return false;
+                }
+
+                checkCollision() {
+                    for (let i = 0; i < this.tail.length; i++) {
+                        if (this.x === this.tail[i].x && this.y === this.tail[i].y) {
+                            this.total = 0;
+                            this.tail = [];
+                            alert('Game Over! Your score: ' + score);
+                            score = 0;
+                            scoreElement.textContent = `Score: ${score}`;
+                        }
+                    }
+                }
+            }
+
+            class Fruit {
+                constructor() {
+                    this.x = 0;
+                    this.y = 0;
+                }
+
+                pickLocation() {
+                    const columnsCount = Math.floor(canvas.width / scale);
+                    const rowsCount = Math.floor(canvas.height / scale);
+                    this.x = Math.floor(Math.random() * columnsCount) * scale;
+                    this.y = Math.floor(Math.random() * rowsCount) * scale;
+                }
+
+                draw() {
+                    ctx.fillStyle = "#e74c3c";
+                    ctx.fillRect(this.x, this.y, scale, scale);
+                }
+            }
+
+            setup();
+
+            upButton.addEventListener('click', () => snake.changeDirection('Up'));
+            leftButton.addEventListener('click', () => snake.changeDirection('Left'));
+            rightButton.addEventListener('click', () => snake.changeDirection('Right'));
+            downButton.addEventListener('click', () => snake.changeDirection('Down'));
+
+            document.addEventListener('keydown', (e) => {
+                const direction = e.key.replace('Arrow', '');
+                snake.changeDirection(direction);
+            });
+        });
+    </script>
+</body>
+</html>
